@@ -6,12 +6,16 @@ function buildProxyConfig(rawProxy) {
         return null;
     }
 
+    // Определяем протокол прокси: http / socks5 и т.п.
+    const proxyType = (process.env.PROXY_TYPE || 'http').toLowerCase();
+    const protocol = proxyType.includes('socks') ? 'socks5' : 'http';
+
     // Формат 1: ip:port:login:password
     const parts = rawProxy.split(':');
     if (parts.length === 4 && !rawProxy.includes('@')) {
         const [host, port, username, password] = parts;
         return {
-            server: `http://${host}:${port}`,
+            server: `${protocol}://${host}:${port}`,
             username,
             password
         };
@@ -28,16 +32,18 @@ function buildProxyConfig(rawProxy) {
             const [host, port] = leftParts;
             const [username, password] = rightParts;
             return {
-                server: `http://${host}:${port}`,
+                server: `${protocol}://${host}:${port}`,
                 username,
                 password
             };
         }
 
         // Любой вариант вида user:pass@host:port или полный URL
-        const withScheme = rawProxy.startsWith('http://') || rawProxy.startsWith('https://')
-            ? rawProxy
-            : `http://${rawProxy}`;
+        const hasScheme = rawProxy.startsWith('http://') ||
+            rawProxy.startsWith('https://') ||
+            rawProxy.startsWith('socks5://');
+
+        const withScheme = hasScheme ? rawProxy : `${protocol}://${rawProxy}`;
 
         try {
             const url = new URL(withScheme);
@@ -57,8 +63,10 @@ function buildProxyConfig(rawProxy) {
     }
 
     // Если это просто host:port без схемы
-    if (!rawProxy.startsWith('http://') && !rawProxy.startsWith('https://')) {
-        return { server: `http://${rawProxy}` };
+    if (!rawProxy.startsWith('http://') &&
+        !rawProxy.startsWith('https://') &&
+        !rawProxy.startsWith('socks5://')) {
+        return { server: `${protocol}://${rawProxy}` };
     }
 
     // По умолчанию — как есть

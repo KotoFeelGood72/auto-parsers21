@@ -1,5 +1,6 @@
 const { DubizzleParser } = require('./DubizzleParser');
 const { startBrowser, createStealthContext, buildProxyConfig } = require('../../../utils/browser');
+const axios = require('axios');
 
 /**
  * Модуль парсера Dubizzle
@@ -73,41 +74,103 @@ class DubizzleModule {
 
     /**
      * Инициализация модуля
-     * Для Dubizzle ВСЕГДА используем прокси из .env (PROXY_SERVER),
-     * причём в формате:
-     *   const browser = await chromium.launch();
-     *   const context = await browser.newContext({ proxy: { server, ... } });
+     * Для Dubizzle ВСЕГДА используем HTTP-прокси из .env (PROXY_SERVER).
+     * Если Dubizzle возвращает страницу блокировки (Error 15 / Imperva),
+     * автоматически перебираем соседние порты (например, 10005..10014),
+     * пока не найдём порт без блокировки или не исчерпаем попытки.
      */
     async initialize() {
         try {
             console.log(`🚀 Инициализация модуля ${this.name}...`);
-            console.log('🌐 Режим Dubizzle: контекст с прокси из PROXY_SERVER');
+            console.log('🌐 Режим Dubizzle: браузер с прокси из PROXY_SERVER (с авто-подбором порта)');
 
-            // 1. Стартуем браузер БЕЗ прокси
-            this.browser = await startBrowser({
-                headless: false,
-                useEnvProxy: false
-            });
+            const envProxy = process.env.PROXY_SERVER;
+            if (!envProxy) {
+                throw new Error('Переменная PROXY_SERVER не задана');
+            }
 
-            // 2. Собираем proxy-конфиг для контекста
-            const rawProxy = process.env.PROXY_SERVER;
+            // Разбираем строку вида host:port@login:password
+            const [hostPortPart, authPart] = envProxy.split('@');
+            if (!hostPortPart || !authPart) {
+                throw new Error('PROXY_SERVER должен быть в формате host:port@login:password');
+            }
+
+            const [host, basePortStr] = hostPortPart.split(':');
+            const [username, password] = authPart.split(':');
+
+            const basePort = parseInt(basePortStr, 10) || 10000;
+            const maxPortsToTry = 10; // попробуем basePort..basePort+9
+            const listingsUrl = this.parser.config.listingsUrl || this.parser.config.baseUrl;
+
+            let selectedPort = null;
+
+            for (let offset = 0; offset < maxPortsToTry; offset++) {
+                const port = basePort + offset;
+                console.log(`🔍 Проверяем прокси ${host}:${port} для Dubizzle...`);
+
+                try {
+                    const response = await axios.get(listingsUrl, {
+                        timeout: 8000,
+                        proxy: {
+                            protocol: 'http',
+                            host,
+                            port,
+                            auth: { username, password }
+                        },
+                        validateStatus: () => true
+                    });
+
+                    const status = response.status;
+                    const body = typeof response.data === 'string' ? response.data : '';
+                    const lower = body.toLowerCase();
+
+                    const wafBlocked =
+                        lower.includes('error 15') ||
+                        lower.includes('access denied') ||
+                        lower.includes('powered by imperva');
+
+                    if (status >= 400 || wafBlocked) {
+                        console.log(`⚠️ Порт ${port} заблокирован (status=${status}, wafBlocked=${wafBlocked})`);
+                        continue;
+                    }
+
+                    selectedPort = port;
+                    console.log(`✅ Для Dubizzle выбран прокси-порт ${port} (status=${status})`);
+                    break;
+                } catch (checkError) {
+                    console.log(`⚠️ Ошибка проверки порта ${port}: ${checkError.message}`);
+                }
+            }
+
+            if (!selectedPort) {
+                console.error('❌ Не удалось найти рабочий прокси-порт для Dubizzle без Error 15');
+                return false;
+            }
+
+            const rawProxy = `${host}:${selectedPort}@${username}:${password}`;
             const proxyConfig = buildProxyConfig(rawProxy);
 
             if (!proxyConfig) {
-                throw new Error('Не удалось построить конфигурацию прокси для Dubizzle');
+                throw new Error('Не удалось построить конфигурацию прокси для Dubizzle после подбора порта');
             }
 
-            console.log('🌐 Dubizzle proxy (context-level):', {
+            console.log('🌐 Dubizzle proxy (browser-level):', {
                 server: proxyConfig.server,
                 hasAuth: !!proxyConfig.username
             });
 
-            // 3. Создаём контекст с прокси и "человеческими" настройками
+            // 2. Стартуем браузер с явным HTTP-прокси
+            this.browser = await startBrowser({
+                headless: false,
+                useEnvProxy: false,
+                proxy: proxyConfig
+            });
+
+            // 3. Создаём контекст с "человеческими" настройками
             this.context = await createStealthContext(this.browser, {
                 locale: 'en-US',
                 timezoneId: 'Asia/Dubai',
-                geolocation: { latitude: 25.2048, longitude: 55.2708 },
-                proxy: proxyConfig
+                geolocation: { latitude: 25.2048, longitude: 55.2708 }
             });
 
             // 4. Инициализируем парсер с контекстом

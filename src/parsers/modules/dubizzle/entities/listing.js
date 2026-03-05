@@ -224,24 +224,30 @@ class DubizzleListingParser {
         try {
             const text = await page.evaluate(() => document.body ? document.body.innerText : '');
 
-            // Признаки страницы Imperva / "Additional security check is required"
+            // Признаки страницы Imperva / security check
             const hasSecurityText = text &&
-                (text.includes('Additional security check is required') ||
-                 text.includes('Why am I seeing this page?'));
+                (
+                    text.includes('Additional security check is required') ||
+                    text.includes('Why am I seeing this page?') ||
+                    text.includes('Pardon Our Interruption') ||
+                    text.includes('something about your browser made us think you were a bot')
+                );
 
             if (!hasSecurityText) {
                 return;
             }
 
-            console.log('⚠️ Dubizzle показывает страницу безопасности с капчей.');
-            console.log('   Открой окно браузера, поставь галочку "I am human" и пройди проверку.');
-            console.log('   Скрипт будет ждать до 10 минут, пока страница не сменится на обычный каталог.');
+            console.log('⚠️ Dubizzle показывает страницу безопасности (Imperva / капча / Pardon Our Interruption).');
+            console.log('   В открытом окне браузера пройди проверку (cookies/JS/капча), чтобы подтвердить, что ты не бот.');
+            console.log('   Скрипт будет ждать до 10 минут, пока страница не сменится на обычный каталог с объявлениями.');
 
             await page.waitForFunction(() => {
                 const bodyText = document.body ? document.body.innerText : '';
                 const stillSecurity =
                     bodyText.includes('Additional security check is required') ||
-                    bodyText.includes('Why am I seeing this page?');
+                    bodyText.includes('Why am I seeing this page?') ||
+                    bodyText.includes('Pardon Our Interruption') ||
+                    bodyText.includes('something about your browser made us think you were a bot');
                 return !stillSecurity;
             }, { timeout: 10 * 60 * 1000 }); // до 10 минут ожидания
 
