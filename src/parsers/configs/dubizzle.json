@@ -1,0 +1,53 @@
+{
+  "name": "Dubizzle",
+  "baseUrl": "https://www.dubizzle.com",
+  "listingsUrl": "https://www.dubizzle.com/dubai/cars?page={page}",
+  "timeout": 60000,
+  "delayBetweenRequests": 1500,
+  "enableImageLoading": false,
+  "selectors": {
+    "listings": {
+      "container": ".listing-item",
+      "link": "a[href*='/dubai/cars/']"
+    },
+    "details": {
+      "title": ".ad-title",
+      "price": {
+        "formatted": ".price",
+        "raw": ".price",
+        "currency": ".price"
+      },
+      "year": ".ad-attributes .attr-item:contains('Year') .attr-value",
+      "kilometers": ".ad-attributes .attr-item:contains('Kilometers') .attr-value",
+      "make": ".ad-attributes .attr-item:contains('Make') .attr-value",
+      "model": ".ad-attributes .attr-item:contains('Model') .attr-value",
+      "fuel_type": ".ad-attributes .attr-item:contains('Fuel Type') .attr-value",
+      "photos": {
+        "selector": ".ad-images img"
+      },
+      "sellers": {
+        "sellerName": ".seller-name",
+        "sellerType": ".seller-type"
+      },
+      "contact": {
+        "phone": ".phone-number"
+      }
+    }
+  },
+  "dataMapping": {
+    "make": "make",
+    "model": "model",
+    "year": "year",
+    "body_type": "body_type",
+    "horsepower": "horsepower",
+    "fuel_type": "fuel_type",
+    "motors_trim": "motors_trim",
+    "kilometers": "kilometers",
+    "exterior_color": "exterior_color",
+    "location": "location"
+  },
+  "validation": {
+    "required": ["title"],
+    "minPrice": 500
+  }
+}

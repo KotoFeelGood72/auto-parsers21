@@ -1,0 +1,40 @@
+{
+  "name": "carswitch",
+  "displayName": "Carswitch",
+  "baseUrl": "https://carswitch.com",
+  "listingsUrl": "https://carswitch.com/uae/used-cars/search",
+  "timeout": 30000,
+  "maxRetries": 3,
+  "retryDelay": 5000,
+  "selectors": {
+    "listing": {
+      "container": "#main-listing-div .pro-item a.image-wrapper",
+      "link": "href"
+    },
+    "details": {
+      "title": ".car-info-holder h1.title",
+      "year": ".mileage .item:nth-child(1) .mileage_text",
+      "kilometers": ".mileage .item:nth-child(2) .mileage_text",
+      "price": ".show-old-price",
+      "photos": ".banner-swiper .slide-image",
+      "location": ".location_text#location_text",
+      "seller": {
+        "name": ".cmpbrndlogo",
+        "type": ".priceingdt:nth-of-type(6) .text-right",
+        "logo": ".cmpbrndlogo",
+        "profile": ".moredealer",
+        "phone": ".callnwbtn"
+      },
+      "features": {
+        "overview": ".cs-block--overview .item",
+        "details": ".cs-block--car-detail .item"
+      }
+    }
+  },
+  "features": {
+    "autoScroll": true,
+    "photoExtraction": true,
+    "sellerDetails": true,
+    "phoneExtraction": true
+  }
+}

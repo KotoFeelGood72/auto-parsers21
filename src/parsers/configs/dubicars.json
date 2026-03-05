@@ -1,0 +1,61 @@
+{
+  "name": "Dubicars",
+  "baseUrl": "https://www.dubicars.com",
+  "listingsUrl": "https://www.dubicars.com/dubai/used?page={page}",
+  "timeout": 60000,
+  "delayBetweenRequests": 1000,
+  "maxRetries": 3,
+  "retryDelay": 5000,
+  "enableImageLoading": false,
+  "selectors": {
+    "listings": {
+      "container": "section#serp-list li.serp-list-item a.image-container",
+      "link": "a"
+    },
+    "details": {
+      "title": ".car-title",
+      "price": {
+        "formatted": "div.price.currency-price-field",
+        "raw": "div.price.currency-price-field",
+        "currency": "div.price.currency-price-field"
+      },
+      "year": "#item-specifications ul li:nth-child(2) span:nth-child(3)",
+      "kilometers": "#item-specifications ul li:nth-child(3) span:nth-child(3)",
+      "make": "#item-specifications ul li",
+      "model": "#item-specifications ul li",
+      "fuel_type": "#item-specifications ul li",
+      "photos": {
+        "selector": "#car-images-slider img"
+      },
+      "sellers": {
+        "sellerName": "#seller-info .seller-intro strong",
+        "sellerLogo": "#seller-info .seller-intro img",
+        "sellerProfileLink": "#seller-info .links li a"
+      },
+      "contact": {
+        "phone": "a.whatsapp-link"
+      }
+    }
+  },
+  "dataMapping": {
+    "make": "make",
+    "model": "model",
+    "year": "year",
+    "body_type": "body_type",
+    "horsepower": "horsepower",
+    "fuel_type": "fuel_type",
+    "motors_trim": "motors_trim",
+    "kilometers": "kilometers",
+    "exterior_color": "exterior_color",
+    "location": "location"
+  },
+  "validation": {
+    "required": ["title", "price"],
+    "minPrice": 1000
+  },
+  "customExtractors": {
+    "make": "extractFromList",
+    "model": "extractFromList",
+    "fuel_type": "extractFromList"
+  }
+}

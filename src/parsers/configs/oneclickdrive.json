@@ -1,0 +1,10 @@
+{
+  "name": "OneClickDrive",
+  "baseUrl": "https://www.oneclickdrive.com",
+  "listingsUrl": "https://www.oneclickdrive.com/buy-used-cars-dubai",
+  "timeout": 60000,
+  "delayBetweenRequests": 1000,
+  "maxRetries": 3,
+  "enableImageLoading": false
+}
+

@@ -1,0 +1,45 @@
+{
+  "name": "autotraders",
+  "displayName": "AutoTraders",
+  "baseUrl": "https://www.autotraders.ae",
+  "listingsUrl": "https://www.autotraders.ae/used-cars/",
+  "timeout": 90000,
+  "maxRetries": 3,
+  "retryDelay": 5000,
+  "delayBetweenRequests": 1000,
+  "enableImageLoading": false,
+  "selectors": {
+    "listing": {
+      "container": ".row.cars-cont",
+      "link": "a"
+    },
+    "details": {
+      "title": "h1",
+      "make": ".cinml li:first-child a",
+      "model": ".cinml li:last-child a",
+      "year": ".yrkms li:first-child",
+      "kilometers": ".yrkms li:last-child",
+      "price": ".price h3",
+      "photos": ".image img.img-fluid",
+      "location": ".cincitymn a",
+      "seller": {
+        "name": ".user-name h4 a",
+        "type": ".user-name",
+        "logo": ".image-user img",
+        "profile": null,
+        "phone": null
+      },
+      "features": {
+        "overview": ".features",
+        "details": ".car-desc"
+      }
+    }
+  },
+  "features": {
+    "autoScroll": true,
+    "photoExtraction": true,
+    "sellerDetails": true,
+    "phoneExtraction": true
+  }
+}
+
